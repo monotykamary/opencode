@@ -6,16 +6,20 @@ import (
 	"fmt"
 
 	"github.com/opencode-ai/opencode/internal/config"
+	"github.com/opencode-ai/opencode/internal/history"
 	"github.com/opencode-ai/opencode/internal/llm/tools"
 	"github.com/opencode-ai/opencode/internal/lsp"
 	"github.com/opencode-ai/opencode/internal/message"
+	"github.com/opencode-ai/opencode/internal/permission"
 	"github.com/opencode-ai/opencode/internal/session"
 )
 
 type agentTool struct {
-	sessions   session.Service
-	messages   message.Service
-	lspClients map[string]*lsp.Client
+	sessions    session.Service
+	messages    message.Service
+	permissions permission.Service
+	history     history.Service
+	lspClients  map[string]*lsp.Client
 }
 
 const (
@@ -54,7 +58,7 @@ func (b *agentTool) Run(ctx context.Context, call tools.ToolCall) (tools.ToolRes
 		return tools.ToolResponse{}, fmt.Errorf("session_id and message_id are required")
 	}
 
-	agent, err := NewAgent(config.AgentTask, b.sessions, b.messages, TaskAgentTools(b.lspClients))
+	agent, err := NewAgent(config.AgentTask, b.sessions, b.messages, TaskAgentTools(b.permissions, b.sessions, b.messages, b.history, b.lspClients))
 	if err != nil {
 		return tools.ToolResponse{}, fmt.Errorf("error creating agent: %s", err)
 	}
@@ -97,13 +101,17 @@ func (b *agentTool) Run(ctx context.Context, call tools.ToolCall) (tools.ToolRes
 }
 
 func NewAgentTool(
-	Sessions session.Service,
-	Messages message.Service,
-	LspClients map[string]*lsp.Client,
+	sessions session.Service,
+	messages message.Service,
+	permissions permission.Service,
+	history history.Service,
+	lspClients map[string]*lsp.Client,
 ) tools.BaseTool {
 	return &agentTool{
-		sessions:   Sessions,
-		messages:   Messages,
-		lspClients: LspClients,
+		sessions:    sessions,
+		messages:    messages,
+		permissions: permissions,
+		history:     history,
+		lspClients:  lspClients,
 	}
 }
