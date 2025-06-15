@@ -459,7 +459,7 @@ func (g *geminiClient) usage(resp *genai.GenerateContentResponse) TokenUsage {
 
 func WithGeminiDisableCache() GeminiOption {
 	return func(options *geminiOptions) {
-		options.disableCache = true
+		options.disableCache = false
 	}
 }
 
